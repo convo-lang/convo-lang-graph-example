@@ -1,0 +1,98 @@
+> define
+
+CustomerMessageEvt=struct(
+    customerId: string
+    orderId?: string
+    message: string
+)
+
+CustomerMessage=struct(
+    customerId: string
+
+    # Text content of customer message
+    message: string
+
+    # An action to take based on the custom message.
+    # If refund is assigned orderId must be populated
+    action: enum("refund" "refund" "other")
+
+    orderId?: string
+
+    # The reason the type of action was picked
+    reason?: string
+)
+
+Refund=struct(
+    orderId: string
+    refundId: string
+    issued: boolean
+    fraudulent?: boolean
+)
+
+
+// processCustomerMessage is a data processing node and will convert a 
+// string customer message into a CustomerMessage object
+//
+// The @on tag is used to subscribe to the `customerMessage` event
+//
+// The content between the `???` pairs are evaluated as natural language
+@on customerMessage
+> processCustomerMessage(evt:CustomerMessageEvt) -> CustomerMessage (
+    ???
+        @json CustomerMessage
+        > user
+        Process the following customer message
+        
+        <customer-message-evt>
+        {{evt}}
+        <customer-message-evt>
+    ???
+)
+
+// routeCustomerMessage is a router node and will route CustomerMessage
+// objects objects based on their determined action.
+//
+// The @router tag denotes the function as a router node indicating the function
+// will return the next function/node to move to.
+//
+// The @routeFrom tag denotes which function the router node will
+// accept data from
+@router
+@routeFrom processCustomerMessage
+> routeCustomerMessage(message:CustomerMessage) -> (
+    switch(
+        message.action
+
+        case('refund') return(giveRefund)
+
+        case('return') return(startReturn)
+
+        default() return(archive)
+    )
+)
+
+// giveRefund posts a refund request to an http endpoint and routes its response to the
+// fraudDetected function is the value returned from the endpoint has the property
+// `fraudulent` set to true.
+// 
+// The @routeTo tag allows processing nodes to do limited routing.
+// For complex routing logic a router node is preferred.
+@routeTo fraudDetected = result.fraudulent
+> giveRefund(message:CustomerMessage) -> Refund (
+    // The issue-refund endpoint responds with a Refund object defined above
+    httpPost('https://api.convo-lang.ai/mock/issue-refund' {
+        orderId: message.orderId
+    })
+)
+
+> startReturn(message:CustomerMessage) -> (
+    // do stuff here
+)
+
+> fraudDetected(refund:Refund) -> (
+    // do stuff here
+)
+
+> archive(message:CustomerMessage) -> (
+    // do stuff here
+)
