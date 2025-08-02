@@ -12,5 +12,7 @@ Check out the [main Convo-Lang repo](https://github.com/convo-lang/convo-lang) o
 
 ### graph-example-1.convo
 Example of a graph that processes customer messages.
-(note - some of the functions in this example implicit returns. Convo functions will return the last evaluated value if a value is not explicitly returned)
+
+*(note - some of the functions in this example implicitly return a value. Convo functions will return the last evaluated value if a value is not explicitly returned)*
+
 ![graph-example-1.convo](https://raw.githubusercontent.com/convo-lang/convo-lang-graph-example/refs/heads/main/images/graph-example-1.png)
